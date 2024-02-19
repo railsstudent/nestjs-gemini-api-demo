@@ -7,9 +7,30 @@ import { env } from '~configs/env.config';
 export class GeminiService {
   private readonly proModel: GenerativeModel;
   constructor(@Inject(GEMINI_AI) genAI: GoogleGenerativeAI) {
-    this.proModel = genAI.getGenerativeModel({ model: env.GEMINI.PRO_MODEL });
+    this.proModel = genAI.getGenerativeModel({
+      model: env.GEMINI.PRO_MODEL,
+      generationConfig: { maxOutputTokens: 2048, temperature: 1, topK: 32, topP: 1 },
+    });
+  }
 
-    console.log(env.GEMINI.KEY);
-    console.log(this.proModel);
+  async generateText(prompt: string): Promise<string> {
+    const streamingResponse = await this.proModel.generateContentStream({
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              text: prompt,
+            },
+          ],
+        },
+      ],
+    });
+
+    const response = await streamingResponse.response;
+    const text = response.text();
+
+    console.log(text);
+    return text;
   }
 }
