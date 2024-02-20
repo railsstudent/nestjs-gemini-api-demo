@@ -20,9 +20,7 @@ export class GeminiController {
     @Body() dto: GenerateTextDto,
     @UploadedFile(fileValidatorPipe)
     file: Express.Multer.File,
-  ): Promise<any> {
-    console.log(dto.prompt);
-    console.log(file);
-    return file;
+  ): Promise<GenAiResponse> {
+    return this.service.generateTextFromMultiModal(dto.prompt, file);
   }
 }

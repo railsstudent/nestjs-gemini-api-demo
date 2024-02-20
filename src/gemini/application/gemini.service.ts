@@ -1,57 +1,75 @@
+import { Content, GenerativeModel, GoogleGenerativeAI } from '@google/generative-ai';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { GenerativeModel, GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from '@google/generative-ai';
-import { GEMINI_AI } from './gemini.constant';
 import { env } from '~configs/env.config';
+import { GENERATION_CONFIG, SAFETY_SETTINGS } from '~configs/gemini.config';
 import { GenAiResponse } from '~gemini/domain/interface/response.interface';
+import { GEMINI_AI } from './gemini.constant';
 
 @Injectable()
 export class GeminiService {
   private readonly logger = new Logger(GeminiService.name);
   private readonly proModel: GenerativeModel;
+  private readonly proVisionModel: GenerativeModel;
 
   constructor(@Inject(GEMINI_AI) genAI: GoogleGenerativeAI) {
     this.proModel = genAI.getGenerativeModel({
       model: env.GEMINI.PRO_MODEL,
-      generationConfig: { maxOutputTokens: 1024, temperature: 1, topK: 32, topP: 1 },
-      safetySettings: [
-        {
-          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        },
-      ],
+      generationConfig: GENERATION_CONFIG,
+      safetySettings: SAFETY_SETTINGS,
+    });
+
+    this.proVisionModel = genAI.getGenerativeModel({
+      model: env.GEMINI.PRO_VISION_MODEL,
+      generationConfig: GENERATION_CONFIG,
+      safetySettings: SAFETY_SETTINGS,
     });
   }
 
   async generateText(prompt: string): Promise<GenAiResponse> {
-    const request = {
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            {
-              text: prompt,
-            },
-          ],
-        },
-      ],
-    };
+    const contents: Content[] = [
+      {
+        role: 'user',
+        parts: [
+          {
+            text: prompt,
+          },
+        ],
+      },
+    ];
 
-    const { totalTokens } = await this.proModel.countTokens(request);
+    const { totalTokens } = await this.proModel.countTokens({ contents });
     this.logger.log(`Tokens: ${JSON.stringify(totalTokens)}`);
 
-    const result = await this.proModel.generateContent(request);
+    const result = await this.proModel.generateContent({ contents });
+    const response = await result.response;
+    const text = response.text();
+
+    this.logger.log(JSON.stringify(text));
+    return { totalTokens, text };
+  }
+
+  async generateTextFromMultiModal(prompt: string, file: Express.Multer.File): Promise<GenAiResponse> {
+    const contents: Content[] = [
+      {
+        role: 'user',
+        parts: [
+          {
+            inlineData: {
+              mimeType: file.mimetype,
+              data: file.buffer.toString('base64'),
+            },
+          },
+          {
+            text: prompt,
+          },
+        ],
+      },
+    ];
+
+    const { totalTokens } = await this.proModel.countTokens({ contents });
+    this.logger.log(`Tokens: ${JSON.stringify(totalTokens)}`);
+
+    const result = await this.proVisionModel.generateContent({ contents });
     const response = await result.response;
     const text = response.text();
 
