@@ -1,9 +1,10 @@
-import { Content, GenerativeModel, GoogleGenerativeAI } from '@google/generative-ai';
+import { GenerativeModel, GoogleGenerativeAI } from '@google/generative-ai';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { env } from '~configs/env.config';
 import { GENERATION_CONFIG, SAFETY_SETTINGS } from '~configs/gemini.config';
 import { GenAiResponse } from '~gemini/domain/interface/response.interface';
 import { GEMINI_AI } from './gemini.constant';
+import { createContent } from './helpers/content.helper';
 
 @Injectable()
 export class GeminiService {
@@ -26,16 +27,7 @@ export class GeminiService {
   }
 
   async generateText(prompt: string): Promise<GenAiResponse> {
-    const contents: Content[] = [
-      {
-        role: 'user',
-        parts: [
-          {
-            text: prompt,
-          },
-        ],
-      },
-    ];
+    const contents = createContent(prompt);
 
     const { totalTokens } = await this.proModel.countTokens({ contents });
     this.logger.log(`Tokens: ${JSON.stringify(totalTokens)}`);
@@ -49,22 +41,7 @@ export class GeminiService {
   }
 
   async generateTextFromMultiModal(prompt: string, file: Express.Multer.File): Promise<GenAiResponse> {
-    const contents: Content[] = [
-      {
-        role: 'user',
-        parts: [
-          {
-            inlineData: {
-              mimeType: file.mimetype,
-              data: file.buffer.toString('base64'),
-            },
-          },
-          {
-            text: prompt,
-          },
-        ],
-      },
-    ];
+    const contents = createContent(prompt, file);
 
     const { totalTokens } = await this.proVisionModel.countTokens({ contents });
     this.logger.log(`Tokens: ${JSON.stringify(totalTokens)}`);
@@ -78,28 +55,11 @@ export class GeminiService {
   }
 
   async tellTheDifferences(firstImage: Express.Multer.File, secondImage: Express.Multer.File): Promise<GenAiResponse> {
-    const contents: Content[] = [
-      {
-        role: 'user',
-        parts: [
-          {
-            inlineData: {
-              mimeType: firstImage.mimetype,
-              data: firstImage.buffer.toString('base64'),
-            },
-          },
-          {
-            inlineData: {
-              mimeType: secondImage.mimetype,
-              data: secondImage.buffer.toString('base64'),
-            },
-          },
-          {
-            text: 'Are the two images the same? If yes, then reply "Yes". If not, then list the differences of colors, shapes, and actions in point form.',
-          },
-        ],
-      },
-    ];
+    const contents = createContent(
+      'Are the two images the same? If yes, then reply "Yes". If not, then list their differences in point form.',
+      firstImage,
+      secondImage,
+    );
 
     const { totalTokens } = await this.proVisionModel.countTokens({ contents });
     this.logger.log(`Tokens: ${JSON.stringify(totalTokens)}`);
