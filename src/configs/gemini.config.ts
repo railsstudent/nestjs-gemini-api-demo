@@ -1,6 +1,6 @@
 import { GenerationConfig, HarmBlockThreshold, HarmCategory, SafetySetting } from '@google/generative-ai';
 
-export const GENERATION_CONFIG: GenerationConfig = { maxOutputTokens: 200, temperature: 1, topK: 32, topP: 1 };
+export const GENERATION_CONFIG: GenerationConfig = { maxOutputTokens: 1024, temperature: 1, topK: 32, topP: 1 };
 
 export const SAFETY_SETTINGS: SafetySetting[] = [
   {

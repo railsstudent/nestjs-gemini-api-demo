@@ -66,7 +66,7 @@ export class GeminiService {
       },
     ];
 
-    const { totalTokens } = await this.proModel.countTokens({ contents });
+    const { totalTokens } = await this.proVisionModel.countTokens({ contents });
     this.logger.log(`Tokens: ${JSON.stringify(totalTokens)}`);
 
     const result = await this.proVisionModel.generateContent({ contents });
