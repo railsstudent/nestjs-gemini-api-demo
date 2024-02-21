@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_PRO_MODEL=${GEMINI_PRO_MODEL}
+      - GEMINI_PRO_VISION_MODEL=${GEMINI_PRO_VISION_MODEL}
+      - PORT=${PORT}
+    ports:
+      - "3000:3000"
+    networks:
+      - ai
+    restart: always
+
+networks:
+  ai:
