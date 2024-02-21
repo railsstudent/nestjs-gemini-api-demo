@@ -43,7 +43,7 @@ export class GeminiService {
 
   async tellTheDifferences(firstImage: Express.Multer.File, secondImage: Express.Multer.File): Promise<GenAiResponse> {
     const contents = createContent(
-      'Are the two images the same? If yes, then reply "Yes". If not, then list some of the differences in point form.',
+      'Are the two images the same? If yes, then reply "Yes". If not, then describes the colors, objects, texts, facial expressions, and emotions in details.',
       firstImage,
       secondImage,
     );
