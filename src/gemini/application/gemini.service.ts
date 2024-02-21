@@ -76,4 +76,39 @@ export class GeminiService {
     this.logger.log(JSON.stringify(text));
     return { totalTokens, text };
   }
+
+  async tellTheDifferences(firstImage: Express.Multer.File, secondImage: Express.Multer.File): Promise<GenAiResponse> {
+    const contents: Content[] = [
+      {
+        role: 'user',
+        parts: [
+          {
+            inlineData: {
+              mimeType: firstImage.mimetype,
+              data: firstImage.buffer.toString('base64'),
+            },
+          },
+          {
+            inlineData: {
+              mimeType: secondImage.mimetype,
+              data: secondImage.buffer.toString('base64'),
+            },
+          },
+          {
+            text: 'Are the two images the same? If yes, then reply "Yes". If not, then list the differences of colors, shapes, and actions in point form.',
+          },
+        ],
+      },
+    ];
+
+    const { totalTokens } = await this.proVisionModel.countTokens({ contents });
+    this.logger.log(`Tokens: ${JSON.stringify(totalTokens)}`);
+
+    const result = await this.proVisionModel.generateContent({ contents });
+    const response = await result.response;
+    const text = response.text();
+
+    this.logger.log(JSON.stringify(text));
+    return { totalTokens, text };
+  }
 }

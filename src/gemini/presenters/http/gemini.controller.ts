@@ -1,5 +1,5 @@
-import { Body, Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Body, Controller, Post, UploadedFile, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { GeminiService } from '~gemini/application/gemini.service';
 import { GenAiResponse } from '~gemini/domain/interface/response.interface';
 import { GenerateTextDto } from './dto/generate-text.dto';
@@ -22,5 +22,22 @@ export class GeminiController {
     file: Express.Multer.File,
   ): Promise<GenAiResponse> {
     return this.service.generateTextFromMultiModal(dto.prompt, file);
+  }
+
+  @Post('tell-the-differences')
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'first', maxCount: 1 },
+      { name: 'second', maxCount: 1 },
+    ]),
+  )
+  async tellTheDifferences(
+    @UploadedFiles()
+    files: {
+      first: Express.Multer.File[];
+      second: Express.Multer.File[];
+    },
+  ): Promise<GenAiResponse> {
+    return this.service.tellTheDifferences(files.first[0], files.second[0]);
   }
 }
