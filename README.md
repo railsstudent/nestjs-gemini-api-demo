@@ -34,7 +34,7 @@ $ npm install
 ## Get Germini API Key
 
 ```bash
-
+$ <some curl command>
 ```
 
 ## Start Docker Compose
