@@ -8,20 +8,44 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { GeminiService } from '~gemini/application/gemini.service';
 import { GenAiResponse } from '~gemini/domain/interface/response.interface';
 import { GenerateTextDto } from './dto/generate-text.dto';
 import { fileValidatorPipe } from './validation/file-validator.pipe';
 
+@ApiTags('Gemini')
 @Controller('gemini')
 export class GeminiController {
   constructor(private service: GeminiService) {}
 
+  @ApiBody({
+    description: 'Prompt',
+    required: true,
+    type: GenerateTextDto,
+  })
   @Post('text')
   generateText(@Body() dto: GenerateTextDto): Promise<GenAiResponse> {
     return this.service.generateText(dto.prompt);
   }
 
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        prompt: {
+          type: 'string',
+          description: 'Prompt',
+        },
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Binary file',
+        },
+      },
+    },
+  })
   @Post('text-and-image')
   @UseInterceptors(FileInterceptor('file'))
   async generateTextFromMultiModal(
@@ -32,6 +56,28 @@ export class GeminiController {
     return this.service.generateTextFromMultiModal(dto.prompt, file);
   }
 
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        prompt: {
+          type: 'string',
+          description: 'Prompt',
+        },
+        first: {
+          type: 'string',
+          format: 'binary',
+          description: 'Binary file',
+        },
+        second: {
+          type: 'string',
+          format: 'binary',
+          description: 'Binary file',
+        },
+      },
+    },
+  })
   @Post('analyse-the-images')
   @UseInterceptors(
     FileFieldsInterceptor([
@@ -39,7 +85,7 @@ export class GeminiController {
       { name: 'second', maxCount: 1 },
     ]),
   )
-  async tellTheDifferences(
+  async analyseImages(
     @Body() dto: GenerateTextDto,
     @UploadedFiles()
     files: {
