@@ -1,5 +1,5 @@
 import { GenerativeModel } from '@google/generative-ai';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { GenAiResponse } from '~gemini/domain/interface/response.interface';
 import { createContent } from './helpers/content.helper';
 import { GEMINI_PRO_MODEL, GEMINI_PRO_VISION_MODEL } from './gemini.constant';
@@ -28,17 +28,24 @@ export class GeminiService {
   }
 
   async generateTextFromMultiModal(prompt: string, file: Express.Multer.File): Promise<GenAiResponse> {
-    const contents = createContent(prompt, file);
+    try {
+      const contents = createContent(prompt, file);
 
-    const { totalTokens } = await this.proVisionModel.countTokens({ contents });
-    this.logger.log(`Tokens: ${JSON.stringify(totalTokens)}`);
+      const { totalTokens } = await this.proVisionModel.countTokens({ contents });
+      this.logger.log(`Tokens: ${JSON.stringify(totalTokens)}`);
 
-    const result = await this.proVisionModel.generateContent({ contents });
-    const response = await result.response;
-    const text = response.text();
+      const result = await this.proVisionModel.generateContent({ contents });
+      const response = await result.response;
+      const text = response.text();
 
-    this.logger.log(JSON.stringify(text));
-    return { totalTokens, text };
+      this.logger.log(JSON.stringify(text));
+      return { totalTokens, text };
+    } catch (err) {
+      if (err instanceof Error) {
+        throw new InternalServerErrorException(err.message, err.stack);
+      }
+      throw err;
+    }
   }
 
   async tellTheDifferences(firstImage: Express.Multer.File, secondImage: Express.Multer.File): Promise<GenAiResponse> {
