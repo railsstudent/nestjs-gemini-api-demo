@@ -132,3 +132,5 @@ Swagger URL: http://localhost:3000/api
 ```bash
 $ ~/google-cloud-sdk/bin/gcloud run deploy \ --update-env-vars GEMINI_API_KEY=<replace with your own key>,GEMINI_PRO_MODEL=gemini-pro,GEMINI_PRO_VISION_MODEL=gemini-pro-vision
 ```
+
+Cloud Run: https://nestjs-gemini-api-demo-lmoqiqicnq-de.a.run.app/
