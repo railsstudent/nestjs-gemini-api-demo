@@ -106,7 +106,7 @@ curl --location 'http://localhost:3000/gemini/analyse-the-images' \
 }
 ```
 
-## Running the app
+## Running the app (if not using Docker Compose)
 
 ```bash
 # development
@@ -123,4 +123,12 @@ $ npm run start:prod
 
 Swagger URL: http://localhost:3000/api
 
-##
+## Deploy to Cloud Run
+
+- install gcloud cli. Assume the installation path of gcloud is ~/google-cloud-sdk/
+- cd to the root of the project
+- replace GEMINI_API_KEY with the actual Gemini API Key
+
+```bash
+$ ~/google-cloud-sdk/bin/gcloud run deploy \ --update-env-vars GEMINI_API_KEY=<replace with your own key>,GEMINI_PRO_MODEL=gemini-pro,GEMINI_PRO_VISION_MODEL=gemini-pro-vision
+```
