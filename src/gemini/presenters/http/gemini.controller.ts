@@ -1,4 +1,12 @@
-import { Body, Controller, Post, UploadedFile, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Post,
+  UploadedFile,
+  UploadedFiles,
+  UseInterceptors,
+} from '@nestjs/common';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { GeminiService } from '~gemini/application/gemini.service';
 import { GenAiResponse } from '~gemini/domain/interface/response.interface';
@@ -24,7 +32,7 @@ export class GeminiController {
     return this.service.generateTextFromMultiModal(dto.prompt, file);
   }
 
-  @Post('tell-the-differences')
+  @Post('analyse-the-images')
   @UseInterceptors(
     FileFieldsInterceptor([
       { name: 'first', maxCount: 1 },
@@ -32,12 +40,20 @@ export class GeminiController {
     ]),
   )
   async tellTheDifferences(
+    @Body() dto: GenerateTextDto,
     @UploadedFiles()
     files: {
-      first: Express.Multer.File[];
-      second: Express.Multer.File[];
+      first?: Express.Multer.File[];
+      second?: Express.Multer.File[];
     },
   ): Promise<GenAiResponse> {
-    return this.service.tellTheDifferences(files.first[0], files.second[0]);
+    if (!files.first?.length) {
+      throw new BadRequestException('The first image is missing');
+    }
+
+    if (!files.second?.length) {
+      throw new BadRequestException('The second image is missing');
+    }
+    return this.service.analyzeImages({ prompt: dto.prompt, firstImage: files.first[0], secondImage: files.second[0] });
   }
 }

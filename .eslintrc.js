@@ -26,7 +26,7 @@ module.exports = {
       "trailingComma": "all",
       "semi": true,
       "printWidth": 120,
-      "useTab": false 
+      "useTabs": false 
     }]
   },
 };
